@@ -17,6 +17,7 @@ local function tableConcat(t1,t2)
 end
 
 local function initCommand(cmd)
+  print('sending command: '..cmd)
   local s = assert(S.socket("unix", "stream, nonblock"))
   local sa = assert(S.t.sockaddr_un('/run/initctl'))
   local ok, err = s:connect(sa)
@@ -49,24 +50,6 @@ local function exec(binary, args, e, wait)
   end
 end
 
-local function fnfork(fn)
-  e = e or env
-  local childPid = S.fork()
-  if childPid < 0 then
-    error('failed to fork and execute '..binary)
-  elseif childPid > 0 then
-    --parent
-    local ok, err, status = S.waitpid(childPid)
-    return status.EXITSTATUS == 0 or nil,
-    err or status.EXITSTATUS ~= 0 and 'failed to run function'
-  else
-    --child
-    S.setsid()
-    fn()
-    S.exit(0)
-  end
-end
-
 local function directory(path)
   return S.stat(path).isdir
 end
@@ -95,11 +78,12 @@ local function listProcesses()
     repeat
       dirent = gen()
       if dirent then
-        if dirent.type == 4 and tonumber(dirent.name) then table.insert(list, tonumber(dirent.name)) end
+        if dirent.type == 4 and tonumber(dirent.name) then
+          table.insert(list, tonumber(dirent.name))
+        end
       end
     until not dirent
   end
-  print(#list)
   return list
 end
 
@@ -124,7 +108,6 @@ return {
   listProcesses = listProcesses,
   waitUntil = waitUntil,
   directory = directory,
-  fnFork = fnFork,
   exec = exec,
   tableConcat = tableConcat,
 }

@@ -8,9 +8,10 @@ RUN apk --update add luajit
 RUN apk --update add docker
 
 RUN ln -s /usr/lib/libluajit-5.1.so.2 /lib/liblua5.1.so.0
+RUN rm /sbin/init
+RUN mkdir /lib/modules
 
 ADD lib/ljsyscall /lib/lua
-
 ADD src/init.lua /sbin/init
 ADD src/init /lib/lua/init
 
